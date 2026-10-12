@@ -6,6 +6,7 @@ pipeline {
         IMAGE = 'devops-real-project'
         CONTAINER = 'test-container'
         DOCKERHUB_REPO = 'bharat181481/devops-real-project'
+        EC2_HOST = '13.60.208.81'
     }
 
     stages {
@@ -44,10 +45,13 @@ pipeline {
                     passwordVariable: 'DOCKERHUB_TOKEN'
                 )]) {
                     bat 'powershell.exe -NoProfile -NonInteractive -Command "$env:DOCKERHUB_TOKEN | & $env:DOCKER login -u $env:DOCKERHUB_USER --password-stdin"'
+
                     bat '"%DOCKER%" tag %IMAGE%:%BUILD_NUMBER% %DOCKERHUB_REPO%:%BUILD_NUMBER%'
                     bat '"%DOCKER%" push %DOCKERHUB_REPO%:%BUILD_NUMBER%'
+
                     bat '"%DOCKER%" tag %IMAGE%:%BUILD_NUMBER% %DOCKERHUB_REPO%:latest'
                     bat '"%DOCKER%" push %DOCKERHUB_REPO%:latest'
+
                     bat '"%DOCKER%" logout'
                 }
             }
@@ -60,7 +64,9 @@ pipeline {
                     keyFileVariable: 'SSH_KEY',
                     usernameVariable: 'EC2_USER'
                 )]) {
-                    bat 'ssh -i "%SSH_KEY%" -o StrictHostKeyChecking=accept-new %EC2_USER%@13.60.208.81 "sudo docker pull %DOCKERHUB_REPO%:latest && (sudo docker rm -f devops-app || true) && sudo docker run -d --name devops-app -p 80:5000 --restart unless-stopped %DOCKERHUB_REPO%:latest"'
+                    bat 'icacls "%SSH_KEY%" /inheritance:r /grant:r "%USERNAME%:R"'
+
+                    bat 'ssh -i "%SSH_KEY%" -o StrictHostKeyChecking=accept-new %EC2_USER%@%EC2_HOST% "sudo docker pull %DOCKERHUB_REPO%:latest && (sudo docker rm -f devops-app || true) && sudo docker run -d --name devops-app -p 80:5000 --restart unless-stopped %DOCKERHUB_REPO%:latest"'
                 }
             }
         }
