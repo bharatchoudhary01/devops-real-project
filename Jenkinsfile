@@ -1,4 +1,3 @@
-
 pipeline {
     agent any
 
@@ -50,6 +49,18 @@ pipeline {
                     bat '"%DOCKER%" tag %IMAGE%:%BUILD_NUMBER% %DOCKERHUB_REPO%:latest'
                     bat '"%DOCKER%" push %DOCKERHUB_REPO%:latest'
                     bat '"%DOCKER%" logout'
+                }
+            }
+        }
+
+        stage('Deploy to AWS EC2') {
+            steps {
+                withCredentials([sshUserPrivateKey(
+                    credentialsId: 'ec2-ssh-key',
+                    keyFileVariable: 'SSH_KEY',
+                    usernameVariable: 'EC2_USER'
+                )]) {
+                    bat 'ssh -i "%SSH_KEY%" -o StrictHostKeyChecking=accept-new %EC2_USER%@13.60.208.81 "sudo docker pull %DOCKERHUB_REPO%:latest && (sudo docker rm -f devops-app || true) && sudo docker run -d --name devops-app -p 80:5000 --restart unless-stopped %DOCKERHUB_REPO%:latest"'
                 }
             }
         }
