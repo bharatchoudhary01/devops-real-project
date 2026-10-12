@@ -4,10 +4,10 @@ pipeline {
     environment {
         DOCKER = 'C:\\Users\\Bharat Choudhary\\AppData\\Local\\Programs\\DockerDesktop\\resources\\bin\\docker.exe'
         IMAGE = 'devops-real-project'
+        CONTAINER = 'test-container'
     }
 
     stages {
-
         stage('Checkout') {
             steps {
                 checkout scm
@@ -28,17 +28,17 @@ pipeline {
 
         stage('Test Application') {
             steps {
-                bat '"%DOCKER%" run -d --name test-container -p 5001:5000 %IMAGE%:%BUILD_NUMBER%'
+                bat '"%DOCKER%" rm -f %CONTAINER% 2>nul || exit /b 0'
+                bat '"%DOCKER%" run -d --name %CONTAINER% -p 5001:5000 %IMAGE%:%BUILD_NUMBER%'
                 bat 'ping -n 6 127.0.0.1 > nul'
-                bat 'curl -f http://localhost:5001/health'
+                bat 'curl.exe -f http://localhost:5001/health'
             }
         }
+    }
 
-        stage('Cleanup') {
-            steps {
-                bat '"%DOCKER%" stop test-container'
-                bat '"%DOCKER%" rm test-container'
-            }
+    post {
+        always {
+            bat '"%DOCKER%" rm -f %CONTAINER% 2>nul || exit /b 0'
         }
     }
 }
