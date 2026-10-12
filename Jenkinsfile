@@ -64,7 +64,7 @@ pipeline {
                     keyFileVariable: 'SSH_KEY',
                     usernameVariable: 'EC2_USER'
                 )]) {
-                    bat 'icacls "%SSH_KEY%" /inheritance:d /grant:r "*S-1-5-18:R"'
+                    bat 'icacls "%SSH_KEY%" /inheritance:r /remove:g "*S-1-5-32-545" /grant:r "*S-1-5-18:F"'
 
                     bat 'ssh -i "%SSH_KEY%" -o StrictHostKeyChecking=accept-new %EC2_USER%@%EC2_HOST% "sudo docker pull %DOCKERHUB_REPO%:latest && (sudo docker rm -f devops-app || true) && sudo docker run -d --name devops-app -p 80:5000 --restart unless-stopped %DOCKERHUB_REPO%:latest"'
                 }
