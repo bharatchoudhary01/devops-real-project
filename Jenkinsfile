@@ -29,7 +29,7 @@ pipeline {
         stage('Test Application') {
             steps {
                 bat '"%DOCKER%" run -d --name test-container -p 5001:5000 %IMAGE%:%BUILD_NUMBER%'
-                bat 'timeout /t 5 /nobreak'
+                bat 'ping -n 6 127.0.0.1 > nul'
                 bat 'curl -f http://localhost:5001/health'
             }
         }
